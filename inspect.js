@@ -61,6 +61,8 @@ var control = false;
 
 var isActive = false;
 
+var overlayID = null;
+
 var oldMode = Camera.mode;
 var noMode = 0;
 var orbitMode = 1;
@@ -265,6 +267,7 @@ function keyPressEvent(event) {
   }
 }
 
+
 function keyReleaseEvent(event) {
   var changed = false;
 
@@ -341,6 +344,7 @@ function mousePressEvent(event) {
       altitude = Math.asin(vector.y / Vec3.length(vector));
 
       isActive = true;
+      overlayID = Overlays.addOverlay("sphere",{position:center,dimensions:{x:0.1,y:0.1,z:0.1}});
       scaleRet(0);
     }
     mouseMoveEvent(event);
@@ -357,6 +361,8 @@ function scaleRet(scale){
 function mouseReleaseEvent(event) {
   if (isActive) {
     isActive = false;
+    Reticle.setPosition(Vec3.multiply(0.5,Reticle.getMaximumPosition()));
+    Overlays.deleteOverlay(overlayID);
     scaleRet(1);
   }
 }
@@ -373,6 +379,8 @@ function mouseMoveEvent(event) {
     if (mode == panningMode) {
       handlePanMode(event.x - mouseLastX, event.y - mouseLastY);
     }
+    var dist = Vec3.distance(center,position);
+    Overlays.editOverlay(overlayID,{dimensions:Vec3.multiply(dist,{x:0.01,y:0.01,z:0.01})});
   }
   }else {
     scaleRet(1);
