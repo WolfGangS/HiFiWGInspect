@@ -102,6 +102,9 @@ var rotatingTowardsTarget = false;
 var targetCamOrientation;
 var oldPosition, oldOrientation;
 
+var startPosition, startOrientation, startTime, timeDelta, timer;
+var timeDiv = 0.01;
+
 
 function orientationOf(vector) {
   var direction,
@@ -128,8 +131,6 @@ function handleRadialMode(dx, dy) {
     z: (Math.cos(altitude) * Math.sin(azimuth)) * radius
   };
   position = Vec3.sum(center, vector);
-  Camera.setPosition(position);
-  Camera.setOrientation(orientationOf(vector));
 }
 
 function handleOrbitMode(dx, dy) {
@@ -148,8 +149,6 @@ function handleOrbitMode(dx, dy) {
     z: (Math.cos(altitude) * Math.sin(azimuth)) * radius
   };
   position = Vec3.sum(center, vector);
-  Camera.setPosition(position);
-  Camera.setOrientation(orientationOf(vector));
 }
 
 
@@ -162,9 +161,6 @@ function handlePanMode(dx, dy) {
 
   center = Vec3.sum(center, dv);
   position = Vec3.sum(position, dv);
-
-  Camera.setPosition(position);
-  Camera.setOrientation(orientationOf(vector));
 }
 
 function saveCameraState() {
@@ -343,12 +339,30 @@ function mousePressEvent(event) {
       azimuth = Math.atan2(vector.z, vector.x);
       altitude = Math.asin(vector.y / Vec3.length(vector));
 
+
+
+      startPosition = Camera.getPosition();
+      startOrientation = Camera.getOrientation();
+      startTime = Date.now();
+
+      timer = Script.setInterval(lerpCam,10);
+
       isActive = true;
       overlayID = Overlays.addOverlay("sphere",{position:center,dimensions:{x:0.1,y:0.1,z:0.1}});
       scaleRet(0);
     }
     mouseMoveEvent(event);
   }
+}
+
+function lerpCam(){
+  timeDelta = (Date.now() - startTime) * timeDiv;
+  if(timeDelta > 1 || !isActive){
+    Script.clearInterval(timer);
+    return;
+  }
+  Camera.setPosition(timeVLerp(startPosition,position));
+  Camera.setOrientation(timeQLerp(startOrientation,orientationOf(vector)));
 }
 
 function scaleRet(scale){
@@ -367,9 +381,23 @@ function mouseReleaseEvent(event) {
   }
 }
 
+function timeVLerp(vecA,vecB){
+  if(timeDelta > 1)return vecB;
+  return Vec3.mix(vecA,vecB,timeDelta);
+}
+
+function timeQLerp(quatA,quatB){
+  if(timeDelta > 1)return quatB;
+  return Quat.mix(quatA,quatB,timeDelta);
+}
+
 function mouseMoveEvent(event) {
   if (isActive){
   if(mode != noMode && !rotatingTowardsTarget) {
+
+    timeDelta = (Date.now() - startTime) * timeDiv;
+    print(timeDelta);
+
     if (mode == radialMode) {
       handleRadialMode(event.x - mouseLastX, event.y - mouseLastY);
     }
@@ -379,8 +407,12 @@ function mouseMoveEvent(event) {
     if (mode == panningMode) {
       handlePanMode(event.x - mouseLastX, event.y - mouseLastY);
     }
+
+    Camera.setPosition(timeVLerp(startPosition,position));
+    Camera.setOrientation(timeQLerp(startOrientation,orientationOf(vector)));
+
     var dist = Vec3.distance(center,position);
-    Overlays.editOverlay(overlayID,{dimensions:Vec3.multiply(dist,{x:0.01,y:0.01,z:0.01})});
+    Overlays.editOverlay(overlayID,{dimensions:Vec3.multiply(dist,{x:0.01,y:0.01,z:0.01}),position:center});
   }
   }else {
     scaleRet(1);
