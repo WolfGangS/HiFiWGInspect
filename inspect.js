@@ -375,7 +375,7 @@ function scaleRet(scale){
 function mouseReleaseEvent(event) {
   if (isActive) {
     isActive = false;
-    Reticle.setPosition(Vec3.multiply(0.5,Reticle.getMaximumPosition()));
+    Reticle.setPosition(Vec3.multiply(0.5,{x:Window.innerWidth,y:Window.innerHeight}));
     Overlays.deleteOverlay(overlayID);
     scaleRet(1);
   }
