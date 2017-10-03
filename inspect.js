@@ -396,7 +396,6 @@ function mouseMoveEvent(event) {
   if(mode != noMode && !rotatingTowardsTarget) {
 
     timeDelta = (Date.now() - startTime) * timeDiv;
-    print(timeDelta);
 
     if (mode == radialMode) {
       handleRadialMode(event.x - mouseLastX, event.y - mouseLastY);
